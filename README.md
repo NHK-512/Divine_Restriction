@@ -1,6 +1,8 @@
-# CommonLibSSE Plugin Template
+# Divine Restriction SKSE
 
-This is a basic plugin template using CommonLibSSE.
+This is the source code for the SKSE plugin that allows you to Restrict* any skill tree of your choice and in exchange, level up the remaining skills faster. https://www.nexusmods.com/skyrimspecialedition/mods/185801.
+
+Below is the default build step from the CommonLibSSE Plugin Template that you can follow to build your own version of this plugin.
 
 ### Requirements
 * [XMake](https://xmake.io) [3.0.0+]
@@ -50,6 +52,3 @@ If you want to upgrade the project's dependencies, run the following commands:
 xmake repo --update
 xmake require --upgrade
 ```
-
-## Documentation
-Please refer to the [Wiki](../../wiki/Home) for more advanced topics.
