@@ -27,7 +27,6 @@ void ConfigFilter::getSkillConfig(std::array<ConfigFilter::SkillMapping, 18>& sk
 void ConfigFilter::ConfigToSkillMap(std::array<ConfigFilter::SkillMapping, 18Ui64> &skillMap, ConfigLoader::Config &cfg)
 {
     REX::INFO("[ConfigFilter] Number of set Blessed Skills: {}", cfg.blessed.size());
-    REX::INFO("[ConfigFilter] blessed array: {}", cfg.blessed);
     REX::INFO("[ConfigFilter] Number of set Restricted Skills: {}", cfg.restricted.size());
 
     for (auto &skillEntry : skillMap)

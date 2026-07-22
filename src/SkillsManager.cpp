@@ -30,7 +30,7 @@ void SkillsManager::LoadConfigs(RE::PlayerCharacter* player)
 
     refreshMapTable(player);
     ConfigFilter::getSkillConfig(skillMapTable);
-    saveSkillsXP(player);  
+    saveSkillsXP(player);
 
     REX::INFO("[Skills Manager] Restricted Skills: ");
     for(const auto& skill : skillMapTable)
@@ -54,8 +54,9 @@ void SkillsManager::LoadConfigs(RE::PlayerCharacter* player)
 void SkillsManager::Update(RE::PlayerCharacter *player, float dtime)
 {
     LoadConfigs(player);
+
     //this makes the code below runs once every second
-    timer += dtime;
+    //timer += dtime;
 
     if (!equipManager)
     {
@@ -97,4 +98,81 @@ void SkillsManager::Update(RE::PlayerCharacter *player, float dtime)
             it->cachedXP = currentXP;
         }
     }
+}
+
+bool isPlayerAtFurnitureName(std::string_view a_furnitureEditorID)
+{
+    auto player = RE::PlayerCharacter::GetSingleton();
+    if(!player) return false;
+
+    auto furnitureRefHandle = player->GetOccupiedFurniture().get();
+    if(!furnitureRefHandle)  return false;
+    REX::INFO("[Skill Manager] Gotten player-occupied Furniture reference handle.");
+
+    auto furnitureBase = furnitureRefHandle->GetBaseObject();
+    if(!furnitureBase)  return false;
+    REX::INFO("[Skill Manager] Gotten furniture Base Object");
+
+    auto furniture = furnitureBase->As<RE::TESFurniture>();
+    if(!furniture)  return false;
+
+    if (furniture->HasKeywordString(a_furnitureEditorID))
+    {   
+        REX::INFO("[Skills Manager] Player is currently at furniture: {}", a_furnitureEditorID);
+        return true;    
+    }
+        
+
+    return false;
+}
+
+
+void SkillsManager::validateCraftingMenu()
+{
+    REX::INFO("[Skill Manager] Checking currently opened menu with restricted skills");
+
+    auto ui = RE::UI::GetSingleton();
+    if(ui && ui->IsMenuOpen(RE::CraftingMenu::MENU_NAME))
+    {
+        REX::INFO("[Skill Manager] Crafting Menu confirmed");
+        auto craftingMenu = skyrim_cast<RE::CraftingMenu*>(ui->GetMenu(RE::CraftingMenu::MENU_NAME).get());
+        if(craftingMenu && craftingMenu->subMenu)
+        {
+            REX::INFO("[Skill Manager] Crafting SUB Menu initialized.");
+            auto msgQueue = RE::UIMessageQueue::GetSingleton();
+
+            //Checking Smithing menus
+            if (skillMapTable[4].state == SkillState::Restricted
+            && (isPlayerAtFurnitureName("CraftingSmithingForge") //specifically for forge because Forge menu doesnt count in Smithing Menu
+            ||  isPlayerAtFurnitureName("CraftingSmithingArmorTable") //alternative for all smithing related: skyrim_cast<RE::CraftingSubMenus::SmithingMenu*>(subMenuPtr)
+            ||  isPlayerAtFurnitureName("CraftingSmithingSharpeningWheel")
+            ||  isPlayerAtFurnitureName("CraftingSmithingSkyforge")
+            )) 
+            {
+                RE::SendHUDMessage::ShowHUDMessage("The Divines have restricted you from Smithing");
+                msgQueue->AddMessage(RE::CraftingMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
+            } 
+            else    //Checking Enchanting menu
+            if (skillMapTable[17].state == SkillState::Restricted
+            &&  isPlayerAtFurnitureName("isEnchanting")) //alternative: skyrim_cast<RE::CraftingSubMenus::EnchantConstructMenu*>(subMenuPtr))
+            {
+                RE::SendHUDMessage::ShowHUDMessage("The Divines have restricted you from Enchanting");
+                msgQueue->AddMessage(RE::CraftingMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
+            } 
+            else    //Checking Alchemy menu
+            if (skillMapTable[10].state == SkillState::Restricted
+            &&  isPlayerAtFurnitureName("isAlchemy")) //alternative: skyrim_cast<RE::CraftingSubMenus::AlchemyMenu*>(subMenuPtr)) 
+            {
+                RE::SendHUDMessage::ShowHUDMessage("The Divines have restricted you from doing Alchemy");
+                msgQueue->AddMessage(RE::CraftingMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
+            }
+            else    REX::WARN("[Skill Manager] Failed to check type of current crafting menu.");
+        }
+    }
+}
+
+bool SkillsManager::isLockpickingRestricted()
+{
+    REX::INFO("[Skill Manager] Checking if Lockpicking skill is restricted...");
+    return skillMapTable[8].state == SkillState::Restricted;
 }
